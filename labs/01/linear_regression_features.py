@@ -20,27 +20,33 @@ parser.add_argument("--test_size", default=0.1, type=lambda x: int(x) if x.isdig
 def main(args: argparse.Namespace) -> list[float]:
     # Create the data
     xs = np.linspace(0, 7, num=args.data_size)
+    xs_ = np.reshape(xs, newshape=(args.data_size, 1))
     ys = np.sin(xs) + np.random.RandomState(args.seed).normal(0, 0.2, size=args.data_size)
 
     rmses = []
+    features = np.zeros(shape=(args.data_size, 0))
     for order in range(1, args.range + 1):
         # TODO: Create features `(x^1, x^2, ..., x^order)`, preferably in this ordering.
         # Note that you can just append `x^order` to the features from the previous iteration.
+        features = np.append(features, xs_**order, axis=1)
 
         # TODO: Split the data into a train set and a test set.
         # Use `sklearn.model_selection.train_test_split` method call, passing
         # arguments `test_size=args.test_size, random_state=args.seed`.
+        train_xs, test_xs = sklearn.model_selection.train_test_split(features, test_size=args.test_size, random_state=args.seed)
+        train_ys, test_ys = sklearn.model_selection.train_test_split(ys, test_size=args.test_size, random_state=args.seed)
 
         # TODO: Fit a linear regression model using `sklearn.linear_model.LinearRegression`;
         # consult the documentation and see especially the `fit` method.
-        model = ...
+        model = sklearn.linear_model.LinearRegression().fit(train_xs, train_ys)
 
         # TODO: Predict targets on the test set using the `predict` method of the trained model.
+        predicted_ys = model.predict(test_xs)
 
         # TODO: Compute root mean square error on the test set predictions.
         # You can either do it manually or look at `sklearn.metrics.mean_squared_error` method
         # and its `squared` parameter.
-        rmse = ...
+        rmse = sklearn.metrics.mean_squared_error(test_ys, predicted_ys, squared=False)
 
         rmses.append(rmse)
 
