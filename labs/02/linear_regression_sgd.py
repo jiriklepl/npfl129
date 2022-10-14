@@ -29,18 +29,21 @@ def main(args: argparse.Namespace) -> tuple[list[float], float, float]:
     data, target = sklearn.datasets.make_regression(n_samples=args.data_size, random_state=args.seed)
 
     # TODO: Append a constant feature with value 1 to the end of every input data
+    data = np.append(data, np.ones((data.shape[0], 1)), axis=1)
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
-    train_data, test_data, train_target, test_target = ...
+    train_data, test_data = sklearn.model_selection.train_test_split(data, test_size=args.test_size, random_state=args.seed)
+    train_target, test_target = sklearn.model_selection.train_test_split(target, test_size=args.test_size, random_state=args.seed)
+    rows = train_data.shape[0]
 
     # Generate initial linear regression weights
     weights = generator.uniform(size=train_data.shape[1], low=-0.1, high=0.1)
 
     train_rmses, test_rmses = [], []
     for epoch in range(args.epochs):
-        permutation = generator.permutation(train_data.shape[0])
+        permutation = generator.permutation(rows)
 
         # TODO: Process the data in the order of `permutation`. For every
         # `args.batch_size` of them, average their gradient, and update the weights.
@@ -48,12 +51,28 @@ def main(args: argparse.Namespace) -> tuple[list[float], float, float]:
         # and the SGD update is
         #   weights = weights - args.learning_rate * (gradient + args.l2 * weights)`.
         # You can assume that `args.batch_size` exactly divides `train_data.shape[0]`.
+        i = 0
+        while i < rows:
+            batch_indices = permutation[i:min(i + args.batch_size, rows)]
+            batch_data = train_data[batch_indices]
+            batch_target = train_target[batch_indices]
 
-        # TODO: Append current RMSE on train/test to `train_rmses`/`test_rmses`.
+            gradient = ((batch_data @ weights - batch_target) @ batch_data) / batch_data.shape[0]
+            
+            weights = weights - args.learning_rate * (gradient + args.l2 * weights)
+
+            i += args.batch_size
+
+        train_rmse = sklearn.metrics.mean_squared_error(train_target, train_data @ weights, squared=False)
+        test_rmse = sklearn.metrics.mean_squared_error(test_target, test_data @ weights, squared=False)
+
+        train_rmses = train_rmses + [train_rmse]
+        test_rmses = test_rmses + [test_rmse]
 
     # TODO: Compute into `explicit_rmse` test data RMSE when fitting
     # `sklearn.linear_model.LinearRegression` on `train_data` (ignoring `args.l2`).
-    explicit_rmse = ...
+    model = sklearn.linear_model.LinearRegression().fit(train_data, train_target)
+    explicit_rmse = sklearn.metrics.mean_squared_error(test_target, model.predict(test_data), squared=False)
 
     if args.plot:
         import matplotlib.pyplot as plt
