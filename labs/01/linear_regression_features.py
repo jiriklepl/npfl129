@@ -33,20 +33,20 @@ def main(args: argparse.Namespace) -> list[float]:
         # TODO: Split the data into a train set and a test set.
         # Use `sklearn.model_selection.train_test_split` method call, passing
         # arguments `test_size=args.test_size, random_state=args.seed`.
-        train_xs, test_xs = sklearn.model_selection.train_test_split(features, test_size=args.test_size, random_state=args.seed)
-        train_ys, test_ys = sklearn.model_selection.train_test_split(ys, test_size=args.test_size, random_state=args.seed)
+        train_data, test_data = sklearn.model_selection.train_test_split(features, test_size=args.test_size, random_state=args.seed)
+        train_target, test_target = sklearn.model_selection.train_test_split(ys, test_size=args.test_size, random_state=args.seed)
 
         # TODO: Fit a linear regression model using `sklearn.linear_model.LinearRegression`;
         # consult the documentation and see especially the `fit` method.
-        model = sklearn.linear_model.LinearRegression().fit(train_xs, train_ys)
+        model = sklearn.linear_model.LinearRegression().fit(train_data, train_target)
 
         # TODO: Predict targets on the test set using the `predict` method of the trained model.
-        predicted_ys = model.predict(test_xs)
+        predicted_ys = model.predict(test_data)
 
         # TODO: Compute root mean square error on the test set predictions.
         # You can either do it manually or look at `sklearn.metrics.mean_squared_error` method
         # and its `squared` parameter.
-        rmse = sklearn.metrics.mean_squared_error(test_ys, predicted_ys, squared=False)
+        rmse = sklearn.metrics.mean_squared_error(test_target, predicted_ys, squared=False)
 
         rmses.append(rmse)
 

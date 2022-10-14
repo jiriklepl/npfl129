@@ -28,19 +28,19 @@ def main(args: argparse.Namespace) -> float:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
-    train_xs, test_xs = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
-    train_ys, test_ys = sklearn.model_selection.train_test_split(dataset.target, test_size=args.test_size, random_state=args.seed)
-    train_xs_ = np.transpose(train_xs)
+    train_data, test_data = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
+    train_target, test_target = sklearn.model_selection.train_test_split(dataset.target, test_size=args.test_size, random_state=args.seed)
+    train_data_ = np.transpose(train_data)
 
     # TODO: Solve the linear regression using the algorithm from the lecture,
     # explicitly computing the matrix inverse (using `np.linalg.inv`).
-    model = np.linalg.inv(train_xs_ @ train_xs) @ train_xs_ @ train_ys
+    model = np.linalg.inv(train_data_ @ train_data) @ train_data_ @ train_target
 
     # TODO: Predict target values on the test set.
-    predicted_ys = test_xs @ model
+    predicted_target = test_data @ model
 
     # TODO: Manually compute root mean square error on the test set predictions.
-    rmse = np.sqrt(np.mean(np.square(test_ys - predicted_ys)))
+    rmse = np.sqrt(np.mean(np.square(test_target - predicted_target)))
 
     return rmse
 
