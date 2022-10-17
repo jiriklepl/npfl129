@@ -10,7 +10,7 @@ import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
-parser.add_argument("--dataset", default="diabetes", type=str, help="Standard sklearn dataset to load")
+parser.add_argument("--dataset", default="wine", type=str, help="Standard sklearn dataset to load")
 parser.add_argument("--recodex", default=False, action="store_true", help="Running in ReCodEx")
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 parser.add_argument("--test_size", default=0.5, type=lambda x: int(x) if x.isdigit() else float(x), help="Test size")
@@ -23,6 +23,8 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_xs, test_xs = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
+    train_ys, test_ys = sklearn.model_selection.train_test_split(dataset.target, test_size=args.test_size, random_state=args.seed)
 
     # TODO: Process the input columns in the following way:
     #
@@ -40,22 +42,43 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # In the output, first there should be all the one-hot categorical features,
     # and then the real-valued features. To process different dataset columns
     # differently, you can use `sklearn.compose.ColumnTransformer`.
+    one_hots, normalized = [], []
+    columns = dataset.data.shape[1]
+    for c in range(columns):
+        column = dataset.data[:, c]
+        if np.all(np.rint(column) == column):
+            one_hots += [c]
+        else:
+            normalized += [c]
+        
+    ct = sklearn.compose.ColumnTransformer([
+        ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), one_hots),
+        ("norm", sklearn.preprocessing.StandardScaler(), normalized)
+    ])
+    
+    train_xs = ct.fit_transform(train_xs)
+    test_xs = ct.fit_transform(test_xs)
 
     # TODO: To the current features, append polynomial features of order 2.
     # If the input values are `[a, b, c, d]`, you should append
     # `[a^2, ab, ac, ad, b^2, bc, bd, c^2, cd, d^2]`. You can generate such polynomial
     # features either manually, or you can generate them with
     # `sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)`.
+    pf = sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
+    
+    
 
     # TODO: You can wrap all the feature processing steps into one transformer
     # by using `sklearn.pipeline.Pipeline`. Although not strictly needed, it is
     # usually comfortable.
+    train_xs = np.append(train_xs, pf.fit_transform(train_xs), axis=1)
+    test_xs = np.append(test_xs, pf.fit_transform(test_xs), axis=1)
 
     # TODO: Fit the feature processing steps on the training data.
     # Then transform the training data into `train_data` (you can do both these
     # steps using `fit_transform`), and transform testing data to `test_data`.
-    train_data = ...
-    test_data = ...
+    train_data = train_xs
+    test_data = test_xs
 
     return train_data[:5], test_data[:5]
 
