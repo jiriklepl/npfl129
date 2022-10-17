@@ -50,12 +50,18 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
             one_hots += [c]
         else:
             normalized += [c]
-        
+            
+    correct_order = one_hots + normalized
+    prefix = len(one_hots)
+
+    train_xs = train_xs[:, correct_order]
+    test_xs = test_xs[:, correct_order]
+
     ct = sklearn.compose.ColumnTransformer([
-        ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), one_hots),
-        ("norm", sklearn.preprocessing.StandardScaler(), normalized)
+        ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), list(range(prefix))),
+        ("norm", sklearn.preprocessing.StandardScaler(), list(range(prefix, columns, 1)))
     ])
-    
+
     train_xs = ct.fit_transform(train_xs)
     test_xs = ct.fit_transform(test_xs)
 
