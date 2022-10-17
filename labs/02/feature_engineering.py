@@ -23,8 +23,7 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
-    train_xs, test_xs = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
-    train_ys, test_ys = sklearn.model_selection.train_test_split(dataset.target, test_size=args.test_size, random_state=args.seed)
+    train_data, test_data = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
 
     # TODO: Process the input columns in the following way:
     #
@@ -50,20 +49,11 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
             one_hots += [c]
         else:
             normalized += [c]
-            
-    correct_order = one_hots + normalized
-    prefix = len(one_hots)
-
-    train_xs = train_xs[:, correct_order]
-    test_xs = test_xs[:, correct_order]
 
     ct = sklearn.compose.ColumnTransformer([
-        ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), list(range(prefix))),
-        ("norm", sklearn.preprocessing.StandardScaler(), list(range(prefix, columns, 1)))
+        ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), one_hots),
+        ("norm", sklearn.preprocessing.StandardScaler(), normalized)
     ])
-
-    train_xs = ct.fit_transform(train_xs)
-    test_xs = ct.fit_transform(test_xs)
 
     # TODO: To the current features, append polynomial features of order 2.
     # If the input values are `[a, b, c, d]`, you should append
@@ -77,14 +67,13 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: You can wrap all the feature processing steps into one transformer
     # by using `sklearn.pipeline.Pipeline`. Although not strictly needed, it is
     # usually comfortable.
-    train_xs = pf.fit_transform(train_xs)
-    test_xs = pf.fit_transform(test_xs)
+    pl = sklearn.pipeline.Pipeline([("ct", ct), ("pf", pf)])
 
     # TODO: Fit the feature processing steps on the training data.
     # Then transform the training data into `train_data` (you can do both these
     # steps using `fit_transform`), and transform testing data to `test_data`.
-    train_data = train_xs
-    test_data = test_xs
+    train_data = pl.fit_transform(train_data)
+    test_data = pl.transform(test_data)
 
     return train_data[:5], test_data[:5]
 
