@@ -77,8 +77,8 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: You can wrap all the feature processing steps into one transformer
     # by using `sklearn.pipeline.Pipeline`. Although not strictly needed, it is
     # usually comfortable.
-    train_xs = np.append(train_xs, pf.fit_transform(train_xs), axis=1)
-    test_xs = np.append(test_xs, pf.fit_transform(test_xs), axis=1)
+    train_xs = pf.fit_transform(train_xs)
+    test_xs = pf.fit_transform(test_xs)
 
     # TODO: Fit the feature processing steps on the training data.
     # Then transform the training data into `train_data` (you can do both these
