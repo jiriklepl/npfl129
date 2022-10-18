@@ -33,8 +33,8 @@ def main(args: argparse.Namespace) -> float:
     # 1. performs sklearn.preprocessing.MinMaxScaler()
     # 2. performs sklearn.preprocessing.PolynomialFeatures()
     # 3. performs sklearn.linear_model.LogisticRegression(random_state=args.seed)
-    #
-    # Then, using sklearn.model_selection.StratifiedKFold(5), evaluate crossvalidated
+
+    # TODO: Then, using sklearn.model_selection.StratifiedKFold(5), evaluate crossvalidated
     # train performance of all combinations of the following parameters:
     # - polynomial degree: 1, 2
     # - LogisticRegression regularization C: 0.01, 1, 100
