@@ -22,8 +22,10 @@ def main(args: argparse.Namespace) -> np.ndarray:
         n_samples=args.data_size, n_features=2, n_informative=2, n_redundant=0,
         n_clusters_per_class=1, flip_y=0, class_sep=2, random_state=args.seed)
     target = 2 * target - 1
+    rows = data.shape[0]
 
     # TODO: Append a constant feature with value 1 to the end of every input data
+    data = np.append(data, np.ones((rows, 1)), axis=1)
 
     # Generate initial perceptron weights
     weights = np.zeros(data.shape[1])
