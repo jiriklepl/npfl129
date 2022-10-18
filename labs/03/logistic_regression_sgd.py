@@ -26,22 +26,37 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
     # Generate an artificial classification dataset
     data, target = sklearn.datasets.make_classification(
         n_samples=args.data_size, n_features=2, n_informative=2, n_redundant=0, random_state=args.seed)
+    rows = data.shape[0]
 
     # TODO: Append a constant feature with value 1 to the end of every input data
+    data = np.append(data, np.ones((rows, 1)), axis=1)
 
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_data, test_data = sklearn.model_selection.train_test_split(data, test_size=args.test_size, random_state=args.seed)
+    train_target, test_target = sklearn.model_selection.train_test_split(target, test_size=args.test_size, random_state=args.seed)
 
     # Generate initial logistic regression weights
     weights = generator.uniform(size=train_data.shape[1], low=-0.1, high=0.1)
 
     for epoch in range(args.epochs):
-        permutation = generator.permutation(train_data.shape[0])
+        permutation = generator.permutation(rows)
 
         # TODO: Process the data in the order of `permutation`. For every
         # `args.batch_size` of them, average their gradient, and update the weights.
         # You can assume that `args.batch_size` exactly divides `train_data.shape[0]`.
+        i = 0
+        while i < rows:
+            batch_indices = permutation[i:min(i + args.batch_size, rows)]
+            batch_data = train_data[batch_indices]
+            batch_target = train_target[batch_indices]
+
+            gradient = ((batch_data @ weights - batch_target) @ batch_data) / batch_data.shape[0]
+            
+            weights = weights - args.learning_rate * (gradient + args.l2 * weights)
+
+            i += args.batch_size
 
         # TODO: After the SGD epoch, measure the average loss and accuracy for both the
         # train set and the test set. The loss is the average MLE loss (i.e., the
