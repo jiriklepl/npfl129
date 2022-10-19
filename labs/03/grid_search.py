@@ -28,22 +28,38 @@ def main(args: argparse.Namespace) -> float:
     # TODO: Split the dataset into a train set and a test set.
     # Use `sklearn.model_selection.train_test_split` method call, passing
     # arguments `test_size=args.test_size, random_state=args.seed`.
+    train_data, test_data = sklearn.model_selection.train_test_split(dataset.data, test_size=args.test_size, random_state=args.seed)
+    train_target, test_target = sklearn.model_selection.train_test_split(dataset.target, test_size=args.test_size, random_state=args.seed)
 
     # TODO: Create a pipeline, which
     # 1. performs sklearn.preprocessing.MinMaxScaler()
     # 2. performs sklearn.preprocessing.PolynomialFeatures()
     # 3. performs sklearn.linear_model.LogisticRegression(random_state=args.seed)
+    mms = sklearn.preprocessing.MinMaxScaler()
+    pf = sklearn.preprocessing.PolynomialFeatures()
+    lgr = sklearn.linear_model.LogisticRegression(random_state=args.seed)
+    pl = sklearn.pipeline.Pipeline([("mms", mms), ("pf", pf), ("lgr", lgr)])
 
-    # TODO: Then, using sklearn.model_selection.StratifiedKFold(5), evaluate crossvalidated
+    train_data = pl.fit_transform(train_data)
+    test_data = pl.transform(test_data)
+
+    # TODO: Then, using sklearn.model_selection.StratifiedKFold(5), evaluate cross-validated
     # train performance of all combinations of the following parameters:
     # - polynomial degree: 1, 2
     # - LogisticRegression regularization C: 0.01, 1, 100
     # - LogisticRegression solver: lbfgs, sag
-    #
+    skf = sklearn.model_selection.StratifiedKFold(5)
+    parameters = {'solver':['lbfgs', 'sag'], 'C':[.01, 1, 10]}
+
+
+
+
+
     # For the best combination of parameters, compute the test set accuracy.
     #
     # The easiest way is to use `sklearn.model_selection.GridSearchCV`.
-    test_accuracy = ...
+
+    test_accuracy = sklearn.model_selection.GridSearchCV(param_grid=parameters, cv=skf)
 
     # If `model` is a fitted `GridSearchCV`, you can use the following code
     # to show the results of all the hyperparameter values evaluated:
