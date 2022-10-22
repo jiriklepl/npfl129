@@ -40,6 +40,14 @@ def main(args: argparse.Namespace) -> np.ndarray:
         # for incorrectly classified examples. If all training instances are
         # correctly classified, set `done=True`, otherwise set `done=False`.
 
+        done = True
+        for i in permutation:
+            y = data[i] @ np.transpose(weights)
+            
+            if target[i] * y <= 0:
+                weights = weights + target[i] * data[i]
+                done = False
+
         if args.plot and not done:
             import matplotlib.pyplot as plt
             if args.plot is not True:
