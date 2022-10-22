@@ -40,16 +40,13 @@ def main(args: argparse.Namespace) -> float:
     lgr = sklearn.linear_model.LogisticRegression(random_state=args.seed)
     pl = sklearn.pipeline.Pipeline([("mms", mms), ("pf", pf), ("lgr", lgr)])
 
-    train_data = pl.fit_transform(train_data)
-    test_data = pl.transform(test_data)
-
     # TODO: Then, using sklearn.model_selection.StratifiedKFold(5), evaluate cross-validated
     # train performance of all combinations of the following parameters:
     # - polynomial degree: 1, 2
     # - LogisticRegression regularization C: 0.01, 1, 100
     # - LogisticRegression solver: lbfgs, sag
     skf = sklearn.model_selection.StratifiedKFold(5)
-    parameters = {'solver':['lbfgs', 'sag'], 'C':[.01, 1, 10]}
+    parameters = {'lgr__solver':['lbfgs', 'sag'], 'lgr__C':[.01, 1, 100], 'pf__degree': [1, 2]}
 
 
 
@@ -59,7 +56,11 @@ def main(args: argparse.Namespace) -> float:
     #
     # The easiest way is to use `sklearn.model_selection.GridSearchCV`.
 
-    test_accuracy = sklearn.model_selection.GridSearchCV(param_grid=parameters, cv=skf)
+    clf = sklearn.model_selection.GridSearchCV(estimator=pl, param_grid=parameters, cv=skf, verbose=2)
+    clf.fit(X=train_data, y=train_target)
+    
+    predict_target = clf.predict(test_data)
+    test_accuracy = np.count_nonzero(predict_target == test_target) / np.size(test_target)
 
     # If `model` is a fitted `GridSearchCV`, you can use the following code
     # to show the results of all the hyperparameter values evaluated:
