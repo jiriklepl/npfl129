@@ -9,6 +9,12 @@ import urllib.request
 
 import numpy as np
 import numpy.typing as npt
+import sklearn.compose
+import sklearn.datasets
+import sklearn.model_selection
+import sklearn.linear_model
+import sklearn.pipeline
+import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -57,8 +63,27 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         np.random.seed(args.seed)
         train = Dataset()
 
+        one_hots = [0,2,3,5,7]
+        normalized=[10]
+        alphas = np.geomspace(0.01, 1, num=30)
+        l1s = np.linspace(0, 1, num=30)
+
+        ct = sklearn.compose.ColumnTransformer([
+            ("one_hot", sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore"), one_hots),
+            ("norm", sklearn.preprocessing.StandardScaler(), normalized)
+        ])
+        pf = sklearn.preprocessing.PolynomialFeatures()
+        lr = sklearn.linear_model.ElasticNet(random_state=args.seed)
+        pl = sklearn.pipeline.Pipeline([("ct", ct), ("pf", pf), ("lr", lr)])
+
+        skf = sklearn.model_selection.StratifiedKFold(5)
+        parameters = {'lr__alpha':alphas, 'pf__degree': [1, 2], 'lr__l1_ratio': l1s}
+
+        clf = sklearn.model_selection.GridSearchCV(estimator=pl, param_grid=parameters, cv=skf, verbose=3, n_jobs=-1)
+        clf.fit(X=train.data, y=train.target)
+
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        model = clf
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -72,7 +97,11 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = ...
+        predictions = model.predict(test.data)
+        
+        if not args.recodex:
+            rmse = sklearn.metrics.mean_squared_error(test.target, predictions, squared=False)
+            print('rmse: ' + str(rmse))
 
         return predictions
 
