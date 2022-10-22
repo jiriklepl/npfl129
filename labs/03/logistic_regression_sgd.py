@@ -2,6 +2,7 @@
 import argparse
 
 import numpy as np
+import math
 import sklearn.datasets
 import sklearn.metrics
 import sklearn.model_selection
@@ -18,6 +19,8 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed")
 parser.add_argument("--test_size", default=0.5, type=lambda x: int(x) if x.isdigit() else float(x), help="Test size")
 # If you add more arguments, ReCodEx will keep them with your default values.
 
+def sigmoid(x):
+    return 1 / (1 + math.e ** -x)
 
 def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]]]:
     # Create a random generator with a given seed
@@ -36,6 +39,7 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
     # arguments `test_size=args.test_size, random_state=args.seed`.
     train_data, test_data = sklearn.model_selection.train_test_split(data, test_size=args.test_size, random_state=args.seed)
     train_target, test_target = sklearn.model_selection.train_test_split(target, test_size=args.test_size, random_state=args.seed)
+    rows = train_data.shape[0]
 
     # Generate initial logistic regression weights
     weights = generator.uniform(size=train_data.shape[1], low=-0.1, high=0.1)
@@ -52,16 +56,22 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, list[tuple[float, float]
             batch_data = train_data[batch_indices]
             batch_target = train_target[batch_indices]
 
-            gradient = ((batch_data @ weights - batch_target) @ batch_data) / batch_data.shape[0]
+            gradient = ((sigmoid(batch_data @ weights) - batch_target) @ batch_data) / batch_data.shape[0]
             
-            weights = weights - args.learning_rate * (gradient + args.l2 * weights)
+            weights = weights - args.learning_rate * gradient
 
             i += args.batch_size
 
         # TODO: After the SGD epoch, measure the average loss and accuracy for both the
         # train set and the test set. The loss is the average MLE loss (i.e., the
-        # negative log likelihood, or crossentropy loss, or KL loss) per example.
-        train_accuracy, train_loss, test_accuracy, test_loss = ...
+        # negative log likelihood, or cross-entropy loss, or KL loss) per example.
+        predict_train = sigmoid(train_data @ weights)
+        predict_test = sigmoid(test_data @ weights)
+        
+        train_accuracy = np.count_nonzero(np.round(predict_train) == train_target) / np.size(train_target)
+        test_accuracy  = np.count_nonzero(np.round(predict_test) == test_target) / np.size(test_target)
+        train_loss = -np.sum(np.log(train_target * predict_train + (1 -  train_target) * (1 - predict_train))) / train_target.shape[0]
+        test_loss  = -np.sum(np.log(test_target * predict_test + (1 -  test_target) * (1 - predict_test))) / test_target.shape[0]
 
         print("After epoch {}: train loss {:.4f} acc {:.1f}%, test loss {:.4f} acc {:.1f}%".format(
             epoch + 1, train_loss, 100 * train_accuracy, test_loss, 100 * test_accuracy))
