@@ -58,20 +58,20 @@ def main(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
     # TODO: To the current features, append polynomial features of order 2.
     # If the input values are `[a, b, c, d]`, you should append
     # `[a^2, ab, ac, ad, b^2, bc, bd, c^2, cd, d^2]`. You can generate such polynomial
-    # features either manually, or you can generate them with
-    # `sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)`.
-    pf = sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
-    
-    
+    # features either manually, or you can employ the provided transformer
+    #   sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
+    # which appends such polynomial features of order 2 to the given features.
 
     # TODO: You can wrap all the feature processing steps into one transformer
     # by using `sklearn.pipeline.Pipeline`. Although not strictly needed, it is
     # usually comfortable.
     pl = sklearn.pipeline.Pipeline([("ct", ct), ("pf", pf)])
 
-    # TODO: Fit the feature processing steps on the training data.
-    # Then transform the training data into `train_data` (you can do both these
-    # steps using `fit_transform`), and transform testing data to `test_data`.
+    # TODO: Fit the feature preprocessing steps (the composed pipeline with all of
+    # them; or the individual steps, if you prefer) on the training data (using `fit`).
+    # Then transform the training data into `train_data` (with a `transform` call;
+    # however, you can combine the two methods into a single `fit_transform` call).
+    # Finally, transform testing data to `test_data`.
     train_data = pl.fit_transform(train_data)
     test_data = pl.transform(test_data)
 
@@ -83,4 +83,5 @@ if __name__ == "__main__":
     train_data, test_data = main(args)
     for dataset in [train_data, test_data]:
         for line in range(min(dataset.shape[0], 5)):
-            print(" ".join("{:.4g}".format(dataset[line, column]) for column in range(min(dataset.shape[1], 140))))
+            print(" ".join("{:.4g}".format(dataset[line, column]) for column in range(min(dataset.shape[1], 140))),
+                  *["..."] if dataset.shape[1] > 140 else [])
