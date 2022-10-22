@@ -9,6 +9,12 @@ import urllib.request
 
 import numpy as np
 import numpy.typing as npt
+import sklearn.compose
+import sklearn.datasets
+import sklearn.model_selection
+import sklearn.linear_model
+import sklearn.pipeline
+import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -50,8 +56,24 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         np.random.seed(args.seed)
         train = Dataset()
 
+        normalized=list(range(15,21))
+        Cs = np.geomspace(.0625, 2, num=30)
+
+        ct = sklearn.compose.ColumnTransformer([
+            ("quant", sklearn.preprocessing.QuantileTransformer(random_state=args.seed), normalized)
+        ])
+        pf = sklearn.preprocessing.PolynomialFeatures()
+        lgr = sklearn.linear_model.LogisticRegression(random_state=args.seed, max_iter=500)
+        pl = sklearn.pipeline.Pipeline([("ct", ct), ("pf", pf), ("lgr", lgr)])
+
+        skf = sklearn.model_selection.StratifiedKFold(7)
+        parameters = {'lgr__solver':['sag', 'lbfgs'], 'pf__degree': [3, 4, 5], 'lgr__C': Cs}
+
+        clf = sklearn.model_selection.GridSearchCV(estimator=pl, param_grid=parameters, cv=skf, verbose=3, n_jobs=-1)
+        clf.fit(X=train.data, y=train.target)
+
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        model = clf
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -65,7 +87,11 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = ...
+        predictions = model.predict(test.data)
+        
+        if not args.recodex:
+            accuracy = np.count_nonzero(test.target == predictions) / np.size(test.target)
+            print('accuracy: ' + str(accuracy))
 
         return predictions
 
